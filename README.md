@@ -51,7 +51,7 @@ docker run --rm -v "$(pwd):/app/tmp" media-utils gps-tagger [OPTIONS]
 | -t [TIMEZONE] | timezone | +07:00      | timezone offset        |
 | -u [USER]     | user     | 1000        | host user running task |
 
-The example of kml file can be downloaded from [google timeline](https://www.google.com/maps/timeline)
+[kml example](https://www.google.com/maps/timeline)
 
 ### video-converter
 
