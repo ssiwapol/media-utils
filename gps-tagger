@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# set parameter
+dir="./tmp"
+kml="history.kml"
+timezone="+07:00"
+user="1000"
+xmp="false"
+while getopts :k:t:u:x flag
+do
+    case "${flag}" in
+        k) kml=${OPTARG};;
+        t) timezone=${OPTARG};;
+        u) user=${OPTARG};;
+        c) xmp='true';;
+        :) echo "Option -$OPTARG requires an argument."; exit 1;;
+        \?) echo "Invalid option: -$OPTARG"; exit 1;;
+    esac
+done
+
+# join directory
+kml=${dir}/${kml}
+output=${dir}/output/
+
+# run
+if [ $xmp == "true" ]
+    # write to xmp
+    then
+        exiftool -m -progress -if 'not ($GPSLatitude or $GPSLongitude)' -geotag ${kml} \
+        '-XMP:GPSDatetime<${CreateDate}'${timezone} -o ${output} -r ${dir}/
+    # write to exif
+    else
+        exiftool -m -progress -if 'not ($GPSLatitude or $GPSLongitude)' -geotag ${kml} \
+        '-geotime<${DateTimeOriginal}'${timezone} -o ${output} -r ${dir}/
+fi
+chown -R ${user}:${user} ${output}

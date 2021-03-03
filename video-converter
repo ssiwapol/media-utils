@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# set parameter
+dir="./tmp"
+format=".mp4"
+timezone="+07:00"
+user="1000"
+compress="false"
+while getopts :f:t:u:c flag
+do
+    case "${flag}" in
+        f) format=${OPTARG};;
+        t) timezone=${OPTARG};;
+        u) user=${OPTARG};;
+        c) compress='true';;
+        :) echo "Option -$OPTARG requires an argument."; exit 1;;
+        \?) echo "Invalid option: -$OPTARG"; exit 1;;
+    esac
+done
+shifttime=$(echo $timezone | grep -oP "^[\+|\-]\d+(?=\:)" | sed 's#+#-#g;t;s#-#+#g')
+
+# create output directory
+mkdir ${dir}/output
+
+# count files
+cnt=$(find ${dir} -maxdepth 1 -type f ! -name "*ignore" | wc -l)
+echo "processing ${cnt} files"
+
+# convert video files
+i=0
+for input in $(find ${dir} -maxdepth 1 -type f ! -name "*ignore" | sort);
+do
+    i=$(($i+1))
+    output=${input%/*}/output/$(basename ${input%.*})$format
+    echo "(${i}/${cnt}) ${input} >> ${output}"
+    if [ $compress == "true" ]
+        then
+            fps=$(mediainfo ${input} --Inform="Video;%FrameRate%")
+            fps=$(printf "%.0f" ${fps})
+            ffmpeg -loglevel panic -i $input -c:v libx264 -c:a aac -crf 22 -preset medium -profile:v high -x264-params keyint=$(($fps*2)) $output
+        else
+            ffmpeg -loglevel panic -i $input -c:v libx264 -c:a aac -crf 17 -preset medium $output
+    fi
+    # write timezone date to XMP:CreateDate
+    exiftool -q -m -overwrite_original -TagsFromFile $input \
+    "-DateTimeOriginal>XMP:CreateDate" "-DateTimeOriginal>XMP:ModifyDate" \
+    -d "%Y:%m:%d %H:%M:%S" $output
+    # write UTC date to other dates
+    exiftool -q -m -overwrite_original -GlobalTimeShift $shifttime\
+    "-XMP:CreateDate>TrackCreateDate" "-XMP:CreateDate>TrackModifyDate" \
+    "-XMP:CreateDate>MediaCreateDate" "-XMP:CreateDate>MediaModifyDate" \
+    "-XMP:CreateDate>QuickTime:CreateDate" "-XMP:CreateDate>QuickTime:ModifyDate" $output
+
+done
+
+# change owner of directory
+chown -R ${user}:${user} ${dir}/output

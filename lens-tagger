@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# set parameter
+dir="./tmp"
+json="config.json"
+user="1000"
+while getopts :j:u: flag
+do
+    case "${flag}" in
+        j) json=${OPTARG};;
+        u) user=${OPTARG};;
+        :) echo "Option -$OPTARG requires an argument."; exit 1;;
+        \?) echo "Invalid option: -$OPTARG"; exit 1;;
+    esac
+done
+
+# join directory
+json=${dir}/${json}
+output=${dir}/output/
+
+# run
+exiftool -m -progress -o ${output} -sep ", " -json=${json} -r ${dir}/
+chown -R ${user}:${user} ${output}

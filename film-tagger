@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# set parameter
+dir="./tmp"
+json="config.json"
+user="1000"
+while getopts :j:u: flag
+do
+    case "${flag}" in
+        j) json=${OPTARG};;
+        u) user=${OPTARG};;
+        :) echo "Option -$OPTARG requires an argument."; exit 1;;
+        \?) echo "Invalid option: -$OPTARG"; exit 1;;
+    esac
+done
+
+# join directory
+json=${dir}/${json}
+output=${dir}/output/
+temp=${dir}/temp.json
+
+# retrieve data from json
+camera_make=$(jq -r .camera_make $json)
+camera_model=$(jq -r .camera_model $json)
+film_make=$(jq -r .film_make $json)
+film_type=$(jq -r .film_type $json)
+film_iso=$(jq -r .film_iso $json)
+# create json file
+jq -n "{Make: \"${camera_make}\", \
+        Model: \"${camera_model}\", \
+        ISO: \"${film_iso}\", \
+        UserComment: \"-Make=${camera_make}\n-Model=${camera_model}\n-ISO=${film_iso}\nFilm Make: ${film_make}\nFilm Type: ${film_type}\", \
+        Keywords: \"${camera_make}, ${camera_model}, ${film_iso}, ${film_make}, ${film_type}\"
+        }"  > ${temp}
+
+# run
+exiftool -m -progress -o ${output} -sep ", " -json=${temp} -r ${dir}/
+chown -R ${user}:${user} ${output}
+rm ${temp}

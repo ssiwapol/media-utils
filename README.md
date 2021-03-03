@@ -1,58 +1,67 @@
-# film-tagger
-
-## USAGE
-1. Copy photos to directory
-2. `./film-tagger.sh [OPTIONS]`
-
-## options
+# Build container image
 
 ```
--j [JSONFILE]   (-jsonfile)     [required]          json file with metadata 
--d [DIRECTORY]  (-directory)    [default=.]         directory that contain photos
--s [SUFFIX]     (-suffix)       [default=.jpg]      photos suffix (e.g., .jpg, .raw)
--f              (-film)         [default=false]     film processing or not
-```
-[json example](./example)
-
-# video-converter
-
-## Usage
-1. Copy videos to directory
-2. `./video-converter.sh [OPTIONS]`
-
-## Options
-
-```
--d [DIRECTORY]  (-directory)    [default=.]         directory that contain photos
--i [INPUT]      (-input)        [default=.mts]      videos input suffix (e.g., .mts, .mp4)
--o [OUTPUT]     (-output)       [default=.mp4]      videos output suffix (e.g., .mp4, .mkv)
--t [TIMESHIFT]  (-timeshift)    [default=+0]        video global timeshift (+0, +1, +7)
--c [COMPRESS]   (-compress)     [default=false]     compress video or not
+git clone https://github.com/ssiwapol/media-utils.git
+cd media-utils
+docker build -t media-utils .
 ```
 
-## Supports
-1. .mts -> .mp4
+# Run
+1. Copy photos/videos to directory
+2. Change path to that directory
+3. Run container
 
-# gps-timestamp
+# Modules
 
-## Usage
-1. Copy videos to directory
-2. `./gps-timestamp.sh [OPTIONS]`
-
-## Options
+### lens-tagger
 
 ```
--d [DIRECTORY]  (-directory)    [default=.]         directory that contain photos
--i [INPUT]      (-input)        [default=.mts]      file input extension (e.g., .jpg, .mp4)
--t [TIMESHIFT]  (-timeshift)    [default=+07:00]    video timezone (+00:00, +07:00)
+docker run --rm -v "$(pwd):/app/tmp" media-utils lens-tagger [OPTIONS]
 ```
 
-## Supports
-1. .jpg, .arw, .dng
-2. .mp4 (xmp)
+| option        | name     | default     | description             |
+| :------------ | :------- | :---------- | :---------------------- |
+| -j [JSONFILE] | jsonfile | config.json | json file with metadata |
+| -u [USER]     | user     | 1000        | host user running task  |
 
-# Requirements
-- jq>=1.5-1
-- exiftool>=11.16
-- ffmpeg>=4.2.1
-- mediainfo>=18.12
+[json example](./example/lens.json)
+
+### film-tagger
+
+```
+docker run --rm -v "$(pwd):/app/tmp" media-utils film-tagger [OPTIONS]
+```
+
+| option        | name     | default     | description             |
+| :------------ | :------- | :---------- | :---------------------- |
+| -j [JSONFILE] | jsonfile | config.json | json file with metadata |
+| -u [USER]     | user     | 1000        | host user running task  |
+
+[json example](./example/film.json)
+
+### gps-tagger
+
+```
+docker run --rm -v "$(pwd):/app/tmp" media-utils gps-tagger [OPTIONS]
+```
+
+| option        | name     | default     | description            |
+| :------------ | :------- | :---------- | :--------------------- |
+| -k [KMLFILE]  | kmlfile  | history.kml | kml file with gps data |
+| -t [TIMEZONE] | timezone | +07:00      | timezone offset        |
+| -u [USER]     | user     | 1000        | host user running task |
+
+The example of kml file can be downloaded from [google timeline](https://www.google.com/maps/timeline)
+
+### video-converter
+
+```
+docker run --rm -v $(pwd):/app/tmp media-utils video-converter [OPTIONS]
+```
+
+| option            | name     | default     | description            |
+| :---------------- | :------- | :---------- | :--------------------- |
+| -f [OUTPUTFORMAT] | format   | .mp4        | video file format      |
+| -t [TIMEZONE]     | timezone | 07:00:00 AM | timezone offset        |
+| -u [USER]         | user     | 1000        | host user running task |
+| -c                | compress | false       | compress file or not   |
